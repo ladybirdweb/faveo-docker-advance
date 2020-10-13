@@ -1,0 +1,68 @@
+version: "3.2"
+services:
+  php:
+    build: './php-fpm/'
+    container_name: php-fpm
+    networks:
+      - backend
+    volumes:
+      - ./${HOST_ROOT_DIR}/:/var/www/html
+  apache:
+    build:
+      context: ./apache
+      args:
+        - DOMAINNAME=${DOMAINNAME}
+    container_name: apache
+    depends_on:
+      - php
+    networks:
+      - frontend
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./${HOST_ROOT_DIR}/:/var/www/html/
+      - ${CUR_DIR}/certbot/letsencrypt/etc/letsencrypt/live/${DOMAINNAME}/cert.pem:/usr/local/apache2/conf/cert.pem
+      - ${CUR_DIR}/certbot/letsencrypt/etc/letsencrypt/live/${DOMAINNAME}/privkey.pem:/usr/local/apache2/conf/privkey.pem
+      - ${CUR_DIR}/certbot/letsencrypt/etc/letsencrypt/live/${DOMAINNAME}/fullchain.pem:/usr/local/apache2/conf/fullchain.pem
+  mysql:
+    image: mariadb:10.3
+    container_name: mariadb
+    volumes:
+      - faveoDB:/var/lib/mysql
+    networks:
+      - backend
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+  redis:
+      image: redis
+      container_name: redis
+      volumes:
+        - redisDB:/data
+      restart: always
+      networks:
+        - backend
+  supervisor:
+      build: './supervisor/'
+      container_name: supervisord
+      volumes:
+        - ./supervisor/conf.d:/etc/supervisor/conf.d
+        - ./${HOST_ROOT_DIR}/:/var/www/html/
+      ports:
+        - "9001:9001"
+      depends_on:
+        - redis
+        - mysql
+      networks:
+        - backend
+volumes:
+  faveoDB:
+  redisDB:
+  
+networks:
+  frontend:
+  backend:
