@@ -26,7 +26,7 @@ services:
       - ${CUR_DIR}/certbot/letsencrypt/etc/letsencrypt/live/${DOMAINNAME}/cert.pem:/usr/local/apache2/conf/cert.pem
       - ${CUR_DIR}/certbot/letsencrypt/etc/letsencrypt/live/${DOMAINNAME}/privkey.pem:/usr/local/apache2/conf/privkey.pem
       - ${CUR_DIR}/certbot/letsencrypt/etc/letsencrypt/live/${DOMAINNAME}/fullchain.pem:/usr/local/apache2/conf/fullchain.pem
-  mysql:
+  mariadb:
     image: mariadb:10.3
     container_name: mariadb
     volumes:
@@ -56,7 +56,7 @@ services:
         - "9001:9001"
       depends_on:
         - redis
-        - mysql
+        - mariadb
       networks:
         - backend
 volumes:
