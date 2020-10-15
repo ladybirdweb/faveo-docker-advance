@@ -1,3 +1,7 @@
+Provide executable permission to faveo-run.sh
+
+chmod +x faveo-run.sh
+
 Run the script faveo-run.sh with sudo privilege by passing the necessary arguments.
 
 Note: You should have a Valid domain name pointing to your public IP. Since this domainname is used to obtain SSL Certificates from Let's Encrypt CA and the Email is used for the same process.
