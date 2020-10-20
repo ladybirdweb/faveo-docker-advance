@@ -9,6 +9,8 @@ echo "Checking Prerequisites....."
 
 apt update && apt install unzip curl -y || yum install unzip curl -y && setenforce 0
 
+unzip -v && curl -V
+
 if [[ $? -eq 0 ]]; then
     echo "Prerequisites check completed."
 else
@@ -96,6 +98,7 @@ echo "Downloading Faveo Helpdesk"
 
 curl https://billing.faveohelpdesk.com/download/faveo\?order_number\=$orderno\&serial_key\=$license --output faveo.zip
 
+
 if [[ $? -eq 0 ]]; then
     echo "Download Successfull";
 else
@@ -106,7 +109,7 @@ fi;
 if [ ! -d $CUR_DIR/$host_root_dir ]; then
     unzip faveo.zip -d $host_root_dir
 else
-    rm -rf $CUR_DIR/$host_root_dir
+    rm -rf $CUR_DIR/$host_root_dir 
     unzip faveo.zip -d $host_root_dir
 fi
 
@@ -123,38 +126,44 @@ db_name=faveo
 db_user=faveo
 db_user_pw=$(openssl rand -base64 12)
 
-if [[ $? -eq 0 ]]; then
-    if [[ ! -f apache/$domainname.conf ]]; then
-        cp apache/example.conf apache/$domainname.conf
-    else
-        rm -f apache/$domainname.conf
-        cp apache/example.conf apache/$domainname.conf
-    fi
-    if [[ ! -f .env ]]; then
-        cp example.env .env
-    else 
-        rm -f .env
-        cp example.env .env
-        sed -i 's:MYSQL_ROOT_PASSWORD=:&'$db_root_pw':' .env
-        sed -i 's/MYSQL_DATABASE=/&'$db_name'/' .env
-        sed -i 's/MYSQL_USER=/&'$db_user'/' .env
-        sed -i 's:MYSQL_PASSWORD=:&'$db_user_pw':' .env
-        sed -i 's/DOMAINNAME=/&'$domainname'/' .env
-        sed -i 's:example.conf:'$domainname':g' apache/$domainname.conf
-        sed -i 's/HOST_ROOT_DIR=/&'$host_root_dir'/' .env
-        sed -i 's:CUR_DIR=:&'$PWD':' .env
-    fi
 
-    
+if [[ ! -f .env ]]; then
+    cp example.env .env
+else 
+    rm -f .env
+    cp example.env .env
+    sed -i 's:MYSQL_ROOT_PASSWORD=:&'$db_root_pw':' .env
+    sed -i 's/MYSQL_DATABASE=/&'$db_name'/' .env
+    sed -i 's/MYSQL_USER=/&'$db_user'/' .env
+    sed -i 's:MYSQL_PASSWORD=:&'$db_user_pw':' .env
+    sed -i 's/DOMAINNAME=/&'$domainname'/' .env
+    sed -i '/ServerName/c\ServerName '$domainname'' ./apache/faveo-helpdesk.conf
+    sed -i 's/HOST_ROOT_DIR=/&'$host_root_dir'/' .env
+    sed -i 's:CUR_DIR=:&'$PWD':' .env
+fi
+
+
+if [[ $? -eq 0 ]]; then
+    docker volume create --name ${domainname}-faveoDB
 else
-    echo "Unkonw error"
-        exit 1;
+     echo "docker volume creation failed."
+     exit 1;
+fi
+
+if [[ $? -eq 0 ]]; then
+    docker network create ${domainname}-frontend
+    docker network create ${domainname}-backend
+
+else
+     echo "docker volume creation failed."
+     exit 1;
 fi
 
 if [[ $? -eq 0 ]]; then
     docker-compose up -d
 else
     echo "Script Failed unknown error."
+    exit 1;
 fi
 
 if [[ $? -eq 0 ]]; then
@@ -166,7 +175,7 @@ if [[ $? -eq 0 ]]; then
     echo "Mysql Database root password: $db_root_pw"
     echo "Faveo Helpdesk name: $db_name"
     echo "Faveo Helpdesk DB User: $db_user"
-    echo "Faveo Helpdesk DB Password: $db_pw"
+    echo "Faveo Helpdesk DB Password: $db_user_pw"
     echo -e "\n"
     echo "#########################################################################"
 else
