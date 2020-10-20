@@ -2,17 +2,20 @@ version: "3.2"
 services:
   php:
     build: './php-fpm/'
-    container_name: php-fpm
+    image: ${DOMAINNAME}/php-fpm:7.3
+    container_name: ${DOMAINNAME}-php-fpm
     networks:
       - backend
     volumes:
       - ./${HOST_ROOT_DIR}/:/var/www/html
+    restart: always
   apache:
-    build:
+    build: 
       context: ./apache
       args:
         - DOMAINNAME=${DOMAINNAME}
-    container_name: apache
+    image: ${DOMAINNAME}/apache:2.4
+    container_name: ${DOMAINNAME}-apache
     depends_on:
       - php
     networks:
@@ -22,15 +25,17 @@ services:
       - "80:80"
       - "443:443"
     volumes:
+      - ./apache/faveo-helpdesk.conf:/usr/local/apache2/conf/faveo-helpdesk.conf
       - ./${HOST_ROOT_DIR}/:/var/www/html/
       - ${CUR_DIR}/certbot/letsencrypt/etc/letsencrypt/live/${DOMAINNAME}/cert.pem:/usr/local/apache2/conf/cert.pem
       - ${CUR_DIR}/certbot/letsencrypt/etc/letsencrypt/live/${DOMAINNAME}/privkey.pem:/usr/local/apache2/conf/privkey.pem
       - ${CUR_DIR}/certbot/letsencrypt/etc/letsencrypt/live/${DOMAINNAME}/fullchain.pem:/usr/local/apache2/conf/fullchain.pem
+    restart: always
   mariadb:
     image: mariadb:10.3
-    container_name: mariadb
+    container_name: ${DOMAINNAME}-mariadb
     volumes:
-      - faveoDB:/var/lib/mysql
+      - db-volume:/var/lib/mysql
     networks:
       - backend
     environment:
@@ -38,19 +43,18 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    restart: on-failure
   redis:
       image: redis
-      container_name: redis
-      volumes:
-        - redisDB:/data
+      container_name: ${DOMAINNAME}-redis
       restart: always
       networks:
         - backend
   supervisor:
       build: './supervisor/'
-      container_name: supervisord
+      image: ${DOMAINNAME}/supervisor:7.3
+      container_name: ${DOMAINNAME}-supervisor
       volumes:
-        - ./supervisor/conf.d:/etc/supervisor/conf.d
         - ./${HOST_ROOT_DIR}/:/var/www/html/
       ports:
         - "9001:9001"
@@ -59,10 +63,16 @@ services:
         - mariadb
       networks:
         - backend
+      restart: on-failure
 volumes:
-  faveoDB:
-  redisDB:
+  db-volume:
+    external: 
+      name: ${DOMAINNAME}-faveoDB
   
 networks:
   frontend:
+    external:
+      name: ${DOMAINNAME}-frontend
   backend:
+    external:
+      name: ${DOMAINNAME}-backend
