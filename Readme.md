@@ -26,7 +26,7 @@ Usage:
 ```
 Example: It should look something like this.
 ```sh
-      sudo ./faveo-run.sh -domainname berserker.tk -email berserkertest@gmail.com -license 5HINJHDGDIBK0000 -orderno 85070569
+      sudo ./faveo-run.sh -domainname berserker.tk -email berserkertest@gmail.com -license 5H876HHDGDIBK0000 -orderno 81230569
 ```
 After the docker installation completed you will be prompted with Database Credentials please copy and save them somewhere safe.
 
