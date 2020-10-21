@@ -7,9 +7,7 @@ fi
 
 echo "Checking Prerequisites....."
 
-apt update && apt install unzip curl -y || yum install unzip curl -y && setenforce 0
-
-unzip -v && curl -V
+apt update && apt install unzip curl -y || yum install unzip curl -y ; setenforce 0
 
 if [[ $? -eq 0 ]]; then
     echo "Prerequisites check completed."
