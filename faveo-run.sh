@@ -1,13 +1,13 @@
 #!/bin/bash
 
-if [[ $# -lt 8 ]]; then 
+if [[ $# -lt 8 ]]; then
     echo "Please run the script by passing all the required arguments."
     exit 1;
 fi
 
 echo "Checking Prerequisites....."
 setenforce 0
-apt update; apt install unzip curl -y || yum install unzip curl -y 
+apt update; apt install unzip curl -y || yum install unzip curl -y
 
 if [[ $? -eq 0 ]]; then
     echo "Prerequisites check completed."
@@ -22,8 +22,8 @@ while test $# -gt 0; do
         case "$1" in
                 -domainname)
                     shift
-                    domainname=$1         
-                    shift 
+                    domainname=$1
+                    shift
                     ;;
                 -email)
                     shift
@@ -45,7 +45,7 @@ while test $# -gt 0; do
                 exit 1;
                 ;;
         esac
-done  
+done
 echo -e "\n";
 echo -e "Confirm the Entered Helpdesk details:\n";
 echo -e "-------------------------------------\n"
@@ -60,7 +60,7 @@ read -p "Continue (y/n)?" REPLY
 if [[ ! $REPLY =~ ^(yes|y|Yes|YES|Y) ]]; then
         exit 1;
 fi;
- 
+
 if [ ! -d $CUR_DIR/certbot/html ]; then
     mkdir -p $CUR_DIR/certbot/html
 elif [ ! -e $CUR_DIR/certbot/html ]; then
@@ -86,7 +86,7 @@ docker rm -f apache-cert
 chown -R $USER:$USER $CUR_DIR/certbot
 
 if [[ $? -eq 0 ]]; then
-    echo "SSL Certificates for $domainname obtained Successfully."        
+    echo "SSL Certificates for $domainname obtained Successfully."
 else
     echo "Permission Issue."
     exit 1;
@@ -107,14 +107,14 @@ fi;
 if [ ! -d $CUR_DIR/$host_root_dir ]; then
     unzip faveo.zip -d $host_root_dir
 else
-    rm -rf $CUR_DIR/$host_root_dir 
+    rm -rf $CUR_DIR/$host_root_dir
     unzip faveo.zip -d $host_root_dir
 fi
 
 if [ $? -eq 0 ]; then
     chown -R 33:33 $host_root_dir
     find $host_root_dir -type d -exec chmod 755 {} \;
-    find $host_root_dir -type f -exec chmod 644 {} \;     
+    find $host_root_dir -type f -exec chmod 644 {} \;
 else
     echo "Extract failure."
 fi
@@ -125,9 +125,7 @@ db_user=faveo
 db_user_pw=$(openssl rand -base64 12)
 
 
-if [[ ! -f .env ]]; then
-    cp example.env .env
-else 
+if [[ $? -eq 0 ]]; then
     rm -f .env
     cp example.env .env
     sed -i 's:MYSQL_ROOT_PASSWORD=:&'$db_root_pw':' .env
@@ -135,18 +133,16 @@ else
     sed -i 's/MYSQL_USER=/&'$db_user'/' .env
     sed -i 's:MYSQL_PASSWORD=:&'$db_user_pw':' .env
     sed -i 's/DOMAINNAME=/&'$domainname'/' .env
-    sed -i '/ServerName/c\ServerName '$domainname'' ./apache/faveo-helpdesk.conf
-    sed -i 's:.*Redirect.*:Redirect / https://'$domainname':' ./apache/faveo-helpdesk.conf
+    sed -i '/ServerName/c\ServerName '$domainname'' ./apache/000-default.conf
     sed -i 's/HOST_ROOT_DIR=/&'$host_root_dir'/' .env
     sed -i 's:CUR_DIR=:&'$PWD':' .env
+else
+    echo "Database Password Generation Failed"
 fi
 
 
 if [[ $? -eq 0 ]]; then
     docker volume create --name ${domainname}-faveoDB
-else
-     echo "docker volume creation failed."
-     exit 1;
 fi
 
 if [[ $? -eq 0 ]]; then
@@ -154,14 +150,16 @@ if [[ $? -eq 0 ]]; then
     docker network create ${domainname}-backend
 
 else
-     echo "docker volume creation failed."
+     echo "Docker volume creation failed."
      exit 1;
 fi
+
+
 
 if [[ $? -eq 0 ]]; then
     docker-compose up -d
 else
-    echo "Script Failed unknown error."
+    echo "Docker Network  Creation Failed"
     exit 1;
 fi
 
