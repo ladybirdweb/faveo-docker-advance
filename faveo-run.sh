@@ -132,8 +132,8 @@ if [[ $? -eq 0 ]]; then
     sed -i 's/MYSQL_DATABASE=/&'$db_name'/' .env
     sed -i 's/MYSQL_USER=/&'$db_user'/' .env
     sed -i 's:MYSQL_PASSWORD=:&'$db_user_pw':' .env
-    sed -i 's/DOMAINNAME=/&'$domainname'/' .env
-    sed -i '/ServerName/c\ServerName '$domainname'' ./apache/000-default.conf
+    sed -i '/ServerName/c\     ServerName '$domainname'' ./apache/faveo-helpdesk.conf
+    sed -i '/Redirect/c\     Redirect \\  https://'$domainname'' ./apache/faveo-helpdesk.conf
     sed -i 's/HOST_ROOT_DIR=/&'$host_root_dir'/' .env
     sed -i 's:CUR_DIR=:&'$PWD':' .env
 else
