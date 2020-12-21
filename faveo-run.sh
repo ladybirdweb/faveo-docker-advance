@@ -128,6 +128,7 @@ db_user_pw=$(openssl rand -base64 12)
 if [[ $? -eq 0 ]]; then
     rm -f .env
     cp example.env .env
+    sed -i 's:DOMAINNAME=:&'$domainname':' .env
     sed -i 's:MYSQL_ROOT_PASSWORD=:&'$db_root_pw':' .env
     sed -i 's/MYSQL_DATABASE=/&'$db_name'/' .env
     sed -i 's/MYSQL_USER=/&'$db_user'/' .env
@@ -146,8 +147,7 @@ if [[ $? -eq 0 ]]; then
 fi
 
 if [[ $? -eq 0 ]]; then
-    docker network create ${domainname}-frontend
-    docker network create ${domainname}-backend
+    docker network create ${domainname}-frontend && docker network create ${domainname}-backend
 
 else
      echo "Docker volume creation failed."
